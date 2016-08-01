@@ -15,7 +15,7 @@ use Data::Util qw/:check/;
 use REST::Client;
 use Data::Printer;
 
-our $DEBUG_REQUESTS_P = 1;
+our $DEBUG_REQUESTS_P = 0;
 our $DEBUG_JSON_P     = 0;
 our $DEBUG_ITERATORS  = 0;
 
@@ -272,10 +272,11 @@ sub next_issue {
         # If there is no next page, we've reached the end of the search results
         $self->{iter} = undef;
         return;
-    } elsif ( ($iter->{offset} == $iter->{results}{limit}) || $calls == 0) {
+      } elsif ( ($iter->{offset} % $iter->{results}{limit} == 0) || $calls == 0) {
         # If the number of calls to the API so far is 0,
         # OR,
-        # if the offset matches the page limit, we need to:
+        # if the offset is divisible by the page limit (meaning that we've
+        # worked through the current page of responses), we need to:
         #
         # 1. bump the start pointer by LIMIT (unless no calls have been made)
         #
@@ -298,9 +299,6 @@ sub next_issue {
     #
 
     my $actual_start = ($calls == 0) ? $iter->{results}{start} : $iter->{results}{json}{start};
-    # p $iter->{results}{json}{start};
-    p $iter->{offset};
-
     return $iter->{results}{json}{results}[$iter->{offset}++ - $actual_start];
 }
 
