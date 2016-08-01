@@ -1,0 +1,21 @@
+=pod
+
+Confluence::REST - Thin wrapper around Confluence's REST API
+
+CAUTION - THIS IS ALPHA CODE
+
+L<Confluence|http://www.atlassian.com/software/confluence> is a proprietary
+wiki from L<Atlassian|http://www.atlassian.com/>.
+
+This module is a thin wrapper around 
+L<Confluence's REST API|https://docs.atlassian.com/confluence/REST/latest/>, 
+which is superseding its old SOAP API, for which there is another Perl module called
+L<Confluence::Client::XMLRPC|https://github.com/heikojansen/confluence-client-xmlrpc>.
+
+Copyright (c) 2013 by CPqD (http://www.cpqd.com.br/).
+Changes to adapt to Confluence REST APIs (c) 2016 by Rich Loveland.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
