@@ -16,7 +16,8 @@ use REST::Client;
 use Data::Printer;
 
 our $DEBUG_REQUESTS_P = 1;
-our $DEBUG_ITERATORS  = 1;
+our $DEBUG_JSON_P     = 0;
+our $DEBUG_ITERATORS  = 0;
 
 sub new {
     my ($class, $URL, $username, $password, $rest_client_config) = @_;
@@ -156,7 +157,7 @@ sub _content {
         croak $self->_error("Cannot convert response content with no Content-Type specified.");
     } elsif ($type =~ m:^application/json:i) {
         my $decoded = $self->{json}->decode($content);
-        p $decoded if $DEBUG_REQUESTS_P;
+        p $decoded if $DEBUG_JSON_P;
         return $decoded;
     } elsif ($type =~ m:^text/plain:i) {
         return $content;
@@ -240,15 +241,16 @@ sub set_search_iterator {
 
     my %params = ( %$params );  # rebuild the hash to own it
 
-    $params{startAt} = 0;
+    $params{start} =  0;
+    $params{limit}   = 25;
 
     $self->{iter} = {
         params  => \%params,    # params hash to be used in the next call
         offset  => 0,           # offset of the next issue to be fetched
-        results => {            # results of the last call (this one is fake)
-            startAt => 0,
-            total   => -1,
-            issues  => [],
+        results => {            # results of the last call
+            start =>  0,
+            limit => 25,
+            json  => {},
         },
     };
 
@@ -259,21 +261,47 @@ sub set_search_iterator {
 
 sub next_issue {
     my ($self) = @_;
+    state $calls = 0;
 
     my $iter = $self->{iter}
         or croak $self->_error("You must call set_search_iterator before calling next_issue");
 
-    if ($iter->{offset} == $iter->{results}{total}) {
-        # This is the end of the search results
+    my $has_next_page = $iter->{results}{json}{_links}{next};
+
+    if (! $has_next_page && $calls >= 1) {
+        # If there is no next page, we've reached the end of the search results
         $self->{iter} = undef;
         return;
-    } elsif ($iter->{offset} == $iter->{results}{startAt} + @{$iter->{results}{issues}}) {
-        # Time to get the next bunch of issues
-        $iter->{params}{startAt} = $iter->{offset};
-        $iter->{results}         = $self->POST('/search', undef, $iter->{params});
+    } elsif ( ($iter->{offset} == $iter->{results}{limit}) || $calls == 0) {
+        # If the number of calls to the API so far is 0,
+        # OR,
+        # if the offset matches the page limit, we need to:
+        #
+        # 1. bump the start pointer by LIMIT (unless no calls have been made)
+        #
+        # 2. fetch the next page of results
+        #
+
+        $iter->{params}{start} += $iter->{results}{limit} if $calls > 0;
+        $iter->{results}{json}  = $self->GET('/search', $iter->{params});
+        $calls++;
     }
 
-    return $iter->{results}{issues}[$iter->{offset}++ - $iter->{results}{startAt}];
+    # If neither of the above conditions are true (meaning that we DO have a
+    # next page of results but we HAVE NOT yet reached the page offset limit,
+    # we need to:
+    #
+    # + return the next item in the search result ...
+    #
+    # + the index of which will be the sum of: the offset minus the start, e.g.,
+    # if the offset is 78, the start should be 75, meaning the index should be 3
+    #
+
+    my $actual_start = ($calls == 0) ? $iter->{results}{start} : $iter->{results}{json}{start};
+    # p $iter->{results}{json}{start};
+    p $iter->{offset};
+
+    return $iter->{results}{json}{results}[$iter->{offset}++ - $actual_start];
 }
 
 sub attach_files {
