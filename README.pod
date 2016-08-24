@@ -7,13 +7,17 @@ CAUTION - THIS IS ALPHA CODE
 L<Confluence|http://www.atlassian.com/software/confluence> is a proprietary
 wiki from L<Atlassian|http://www.atlassian.com/>.
 
-This module is a thin wrapper around 
-L<Confluence's REST API|https://docs.atlassian.com/confluence/REST/latest/>, 
-which is superseding its old SOAP API, for which there is another Perl module called
+This module is a thin wrapper around L<Confluence's REST
+API|https://developer.atlassian.com/confcloud/confluence-rest-api-39985291.html>,
+which is superseding its old SOAP API.  (If you want to interact with
+the SOAP API, there's another Perl module called
 L<Confluence::Client::XMLRPC|https://github.com/heikojansen/confluence-client-xmlrpc>.
 
+This code is basically L<JIRA::REST|metacpan.org/pod/JIRA::REST> with
+some tweaks to get it to work with the Confluence REST API.
+
 Copyright (c) 2013 by CPqD (http://www.cpqd.com.br/).
-Changes to adapt to Confluence REST APIs (c) 2016 by Rich Loveland.
+Copyright (c) 2016 (Changes to adapt to Confluence REST APIs) by Rich Loveland.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
