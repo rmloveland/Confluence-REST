@@ -234,8 +234,6 @@ sub POST {
     return $self->_content();
 }
 
-# XXX: fix this to match the Confluence REST output
-
 sub set_search_iterator {
     my ($self, $params) = @_;
 
@@ -257,14 +255,12 @@ sub set_search_iterator {
     return;
 }
 
-# XXX: fix this to match `set_search_iterator`
-
-sub next_issue {
+sub next_result {
     my ($self) = @_;
     state $calls = 0;
 
     my $iter = $self->{iter}
-        or croak $self->_error("You must call set_search_iterator before calling next_issue");
+        or croak $self->_error("You must call set_search_iterator before calling next_result");
 
     my $has_next_page = $iter->{results}{json}{_links}{next};
 
@@ -382,7 +378,7 @@ version 0.011
         fields     => [ qw/summary status assignee/ ],
     });
 
-    while (my $issue = $jira->next_issue) {
+    while (my $issue = $jira->next_result) {
         print "Found issue $issue->{key}\n";
     }
 
@@ -567,18 +563,18 @@ This module provides a few utility methods.
 =head2 B<set_search_iterator> PARAMS
 
 Sets up an iterator for the search specified by the hash-ref PARAMS. It must
-be called before calls to B<next_issue>.
+be called before calls to B<next_result>.
 
 PARAMS must conform with the query parameters allowed for the
 C</rest/api/2/search> JIRA REST endpoint.
 
-=head2 B<next_issue>
+=head2 B<next_result>
 
 This must be called after a call to B<set_search_iterator>. Each call
 returns a reference to the next issue from the filter. When there are no
 more issues it returns undef.
 
-Using the set_search_iterator/next_issue utility methods you can iterate
+Using the set_search_iterator/next_result utility methods you can iterate
 through large sets of issues without worrying about the startAt/total/offset
 attributes in the response from the /search REST endpoint. These methods
 implement the "paging" algorithm needed to work with those attributes.
