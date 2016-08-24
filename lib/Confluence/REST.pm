@@ -326,15 +326,13 @@ sub attach_files {
 
 __END__
 
-# XXX: Update POD Documentation 
-
 =pod
 
 =encoding UTF-8
 
 =head1 NAME
 
-JIRA::REST - Thin wrapper around JIRA's REST API
+Confluence::REST - Thin wrapper around Confluence's REST API
 
 =head1 VERSION
 
@@ -342,12 +340,13 @@ version 0.011
 
 =head1 SYNOPSIS
 
-    use JIRA::REST;
+    use Confluence::REST;
 
-    my $jira = JIRA::REST->new('https://jira.example.net', 'myuser', 'mypass');
+    my $confluence = Confluence::REST->new('https://confluence.example.net', 'myuser', 'mypass');
 
+    # FIXME: update the code samples
     # File a bug
-    my $issue = $jira->POST('/issue', undef, {
+    my $issue = $confluence->POST('/issue', undef, {
         fields => {
             project   => { key => 'PRJ' },
             issuetype => { name => 'Bug' },
@@ -357,10 +356,10 @@ version 0.011
     });
 
     # Get issue
-    $issue = $jira->GET("/issue/TST-101");
+    $issue = $confluence->GET("/issue/TST-101");
 
     # Iterate on issues
-    my $search = $jira->POST('/search', undef, {
+    my $search = $confluence->POST('/search', undef, {
         jql        => 'project = "TST" and status = "open"',
         startAt    => 0,
         maxResults => 16,
@@ -372,30 +371,42 @@ version 0.011
     }
 
     # Iterate using utility methods
-    $jira->set_search_iterator({
+    $confluence->set_search_iterator({
         jql        => 'project = "TST" and status = "open"',
         maxResults => 16,
         fields     => [ qw/summary status assignee/ ],
     });
 
-    while (my $issue = $jira->next_result) {
+    while (my $issue = $confluence->next_result) {
         print "Found issue $issue->{key}\n";
     }
 
     # Attach files using an utility method
-    $jira->attach_files('TST-123', '/path/to/doc.txt', 'image.png');
+    $confluence->attach_files('TST-123', '/path/to/doc.txt', 'image.png');
 
 =head1 DESCRIPTION
 
-L<JIRA|http://www.atlassian.com/software/jira/> is a proprietary bug
-tracking system from Atlassian.
+Confluence::REST - Thin wrapper around Confluence's REST API
 
-This module implements a very thin wrapper around L<JIRA's REST
-API|https://docs.atlassian.com/jira/REST/latest/> which is superseding
-it's old L<SOAP
-API|http://docs.atlassian.com/software/jira/docs/api/rpc-jira-plugin/latest/com/atlassian/jira/rpc/soap/JiraSoapService.html>
-for which there is another Perl module called
-L<JIRA::Client|http://search.cpan.org/dist/JIRA-Client/>.
+CAUTION - THIS IS ALPHA CODE
+
+L<Confluence|http://www.atlassian.com/software/confluence> is a proprietary
+wiki from L<Atlassian|http://www.atlassian.com/>.
+
+This module is a thin wrapper around L<Confluence's REST
+API|https://developer.atlassian.com/confcloud/confluence-rest-api-39985291.html>,
+which is superseding its old SOAP API.  (If you want to interact with
+the SOAP API, there's another Perl module called
+L<Confluence::Client::XMLRPC|https://github.com/heikojansen/confluence-client-xmlrpc>.
+
+This code is basically L<JIRA::REST|metacpan.org/pod/JIRA::REST> with
+some tweaks to get it to work with the Confluence REST API.
+
+Copyright (c) 2013 by CPqD (http://www.cpqd.com.br/).
+Copyright (c) 2016 (Changes to adapt to Confluence REST APIs) by Rich Loveland.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
 
 =head1 CONSTRUCTOR
 
