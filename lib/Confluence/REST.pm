@@ -13,7 +13,7 @@ use URI::Escape;
 use JSON;
 use Data::Util qw/:check/;
 use REST::Client;
-use Data::Printer;
+use Data::Dumper;
 
 our $DEBUG_REQUESTS_P = 0;
 our $DEBUG_JSON_P     = 0;
@@ -157,7 +157,7 @@ sub _content {
         croak $self->_error("Cannot convert response content with no Content-Type specified.");
     } elsif ($type =~ m:^application/json:i) {
         my $decoded = $self->{json}->decode($content);
-        p $decoded if $DEBUG_JSON_P;
+        print Dumper $decoded if $DEBUG_JSON_P;
         return $decoded;
     } elsif ($type =~ m:^text/plain:i) {
         return $content;
@@ -268,7 +268,8 @@ sub next_result {
         # If there is no next page, we've reached the end of the search results
         $self->{iter} = undef;
         return;
-      } elsif ( ($iter->{offset} % $iter->{results}{limit} == 0) || $calls == 0) {
+      }
+    elsif ($iter->{offset} % $iter->{results}{limit} == 0) {
         # If the number of calls to the API so far is 0,
         # OR,
         # if the offset is divisible by the page limit (meaning that we've
@@ -282,8 +283,12 @@ sub next_result {
         $iter->{params}{start} += $iter->{results}{limit} if $calls > 0;
         $iter->{results}{json}  = $self->GET('/search', $iter->{params});
         $calls++;
-    }
 
+        print Dumper $iter if $DEBUG_ITERATORS;
+      }
+    elsif ($calls == 0) {
+      $iter->{params}{start} += $iter->{results}{limit};
+    }
     # If neither of the above conditions are true (meaning that we DO have a
     # next page of results but we HAVE NOT yet reached the page offset limit,
     # we need to:
