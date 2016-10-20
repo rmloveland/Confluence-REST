@@ -16,6 +16,8 @@ L<Confluence::Client::XMLRPC|https://github.com/heikojansen/confluence-client-xm
 This code is basically L<JIRA::REST|metacpan.org/pod/JIRA::REST> with
 some tweaks to get it to work with the Confluence REST API.
 
+For an example of a script that uses this library, see the file C<bin/csp>.
+
 Copyright (c) 2013 by CPqD (http://www.cpqd.com.br/).
 Copyright (c) 2016 (Changes to adapt to Confluence REST APIs) by Rich Loveland.
 
