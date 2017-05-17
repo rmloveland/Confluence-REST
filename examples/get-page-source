@@ -1,0 +1,28 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use feature qw/ say state /;
+use Confluence::REST;
+use Data::Dumper;
+use JSON;
+
+die "Usage: get-page-source 'sdk:Mobile SDKs'\n" unless scalar @ARGV >= 1;
+my $page = shift;
+
+my ( $space, $title ) = split /:/, $page;
+
+my $base_url = 'https://wiki.appnexus.com';
+my $confluence = Confluence::REST->new($base_url);
+my $cql        = qq[type = page AND space = '$space' AND title = '$title'];
+
+$confluence->set_search_iterator({
+                                  cql    => $cql,
+                                  expand => 'body.storage',
+                                 });
+
+if (my $item = $confluence->next_result) {
+  state $count = 0;
+  my $content_body = $item->{body}->{storage}->{value};
+  say $content_body;
+}
