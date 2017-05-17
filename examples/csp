@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use autodie;
 use experimentals;
-use lib "$ENV{HOME}/Code/personal/Confluence-REST/lib";
 use Confluence::REST;
 use Data::Dumper;
 use JSON;
