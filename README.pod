@@ -13,7 +13,7 @@ which is superseding its old SOAP API.  (If you want to interact with
 the SOAP API, there's another Perl module called
 L<Confluence::Client::XMLRPC|https://github.com/heikojansen/confluence-client-xmlrpc>.
 
-This code is basically L<JIRA::REST|metacpan.org/pod/JIRA::REST> with
+This code is basically L<JIRA::REST|https://metacpan.org/pod/JIRA::REST> with
 some tweaks to get it to work with the Confluence REST API.
 
 For an example of a script that uses this library, see the file C<examples/csp>.
