@@ -347,47 +347,16 @@ version 0.011
 
     use Confluence::REST;
 
-    my $confluence = Confluence::REST->new('https://confluence.example.net', 'myuser', 'mypass');
-
-    # FIXME: update the code samples
-    # File a bug
-    my $issue = $confluence->POST('/issue', undef, {
-        fields => {
-            project   => { key => 'PRJ' },
-            issuetype => { name => 'Bug' },
-            summary   => 'Cannot login',
-            description => 'Bla bla bla',
-        },
-    });
-
-    # Get issue
-    $issue = $confluence->GET("/issue/TST-101");
-
-    # Iterate on issues
-    my $search = $confluence->POST('/search', undef, {
-        jql        => 'project = "TST" and status = "open"',
-        startAt    => 0,
-        maxResults => 16,
-        fields     => [ qw/summary status assignee/ ],
-    });
-
-    foreach my $issue (@{$search->{issues}}) {
-        print "Found issue $issue->{key}\n";
-    }
+    my $confluence = Confluence::REST->new('https://confluence.example.net');
 
     # Iterate using utility methods
     $confluence->set_search_iterator({
-        jql        => 'project = "TST" and status = "open"',
-        maxResults => 16,
-        fields     => [ qw/summary status assignee/ ],
+        cql        => 'type = "page" and space = "home"',
     });
 
     while (my $issue = $confluence->next_result) {
         print "Found issue $issue->{key}\n";
     }
-
-    # Attach files using an utility method
-    $confluence->attach_files('TST-123', '/path/to/doc.txt', 'image.png');
 
 =head1 DESCRIPTION
 
@@ -413,165 +382,6 @@ Copyright (c) 2016 (Changes to adapt to Confluence REST APIs) by Rich Loveland.
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
 
-=head1 CONSTRUCTOR
-
-=head2 new URL, USERNAME, PASSWORD [, REST_CLIENT_CONFIG]
-
-The constructor needs up to four arguments:
-
-=over
-
-=item * URL
-
-A string or a URI object denoting the base URL of the JIRA
-server. This is a required argument.
-
-You may choose a specific API version by appending the
-C</rest/api/VERSION> string to the URL's path. It's more common to
-left it unspecified, in which case the C</rest/api/latest> string is
-appended automatically to the URL.
-
-=item * USERNAME
-
-The username of a JIRA user.
-
-It can be undefined if PASSWORD is also undefined. In such a case the
-user credentials are looked up in the C<.netrc> file.
-
-=item * PASSWORD
-
-The HTTP password of the user. (This is the password the user uses to
-log in to JIRA's web interface.)
-
-It can be undefined, in which case the user credentials are looked up
-in the C<.netrc> file.
-
-=item * REST_CLIENT_CONFIG
-
-A JIRA::REST object uses a REST::Client object to make the REST
-invocations. This optional argument must be a hash-ref that can be fed
-to the REST::Client constructor. Note that the C<URL> argument
-overwrites any value associated with the C<host> key in this hash.
-
-To use a network proxy please set the 'proxy' argument to the string or URI
-object describing the fully qualified (including port) URL to your network
-proxy. This is an extension to the REST::Client configuration and will be
-removed from the hash before passing it on to the REST::Client constructor.
-
-=back
-
-=head1 REST METHODS
-
-JIRA's REST API documentation lists dozens of "resources" which can be
-operated via the standard HTTP requests: GET, DELETE, PUT, and
-POST. JIRA::REST objects implement four methods called GET, DELETE,
-PUT, and POST to make it easier to invoke and get results from JIRA's
-REST endpoints.
-
-All four methods need two arguments:
-
-=over
-
-=item * RESOURCE
-
-This is the resource's 'path', minus the API version prefix. For
-example, in order to GET the list of all fields, you must pass simply
-C</field>, not C</rest/api/latest/field>, and in order to get a list
-of all the components of a project, you must pass simply
-C</project/$key/components>, not
-C</rest/api/latest/project/$key/components>.
-
-This argument is required.
-
-=item * QUERY
-
-Some resource methods require or admit parameters which are passed as
-a C<query-string> appended to the resource's path. You may construct
-the query string and append it to the RESOURCE argument yourself, but
-it's easier and safer to pass the arguments in a hash. This way the
-query string is constructed for you and its values are properly
-L<percent-encoded|http://en.wikipedia.org/wiki/Percent-encoding> to
-avoid errors.
-
-This argument is optional for GET and DELETE. For PUT and POST it must
-be passed explicitly as C<undef> if not needed.
-
-=back
-
-The PUT and POST methods accept two more arguments:
-
-=over
-
-=item * VALUE
-
-This is the "entity" being PUT or POSTed. It can be any value, but
-usually is a hash-ref. The value is encoded as a
-L<JSON|http://www.json.org/> string using the C<JSON::encode> method
-and sent with a Content-Type of C<application/json>.
-
-It's usually easy to infer from the JIRA REST API documentation which
-kind of value you should pass to each resource.
-
-This argument is required.
-
-=item * HEADERS
-
-This optional argument allows you to specify extra HTTP headers that
-should be sent with the request. Each header is specified as a
-key/value pair in a hash.
-
-=back
-
-All four methods return the value returned by the associated
-resource's method, as specified in the documentation, decoded
-according to its content type as follows:
-
-=over
-
-=item * application/json
-
-The majority of the API's resources return JSON values. Those are
-decoded using the C<decode> method of a C<JSON> object. Most of the
-endpoints return hashes, which are returned as a Perl hash-ref.
-
-=item * text/plain
-
-Those values are returned as simple strings.
-
-=back
-
-Some endpoints don't return anything. In those cases, the methods
-return C<undef>. The methods croak if they get any other type of
-values in return.
-
-In case of errors (i.e., if the underlying HTTP method return an error
-code different from 2xx) the methods croak with a multi-line string
-like this:
-
-    ERROR: <CODE> - <MESSAGE>
-    <CONTENT-TYPE>
-    <CONTENT>
-
-So, in order to treat errors you must invoke the methods in an eval
-block or use any of the exception handling Perl modules, such as
-C<Try::Tiny> and C<Try::Catch>.
-
-=head2 GET RESOURCE [, QUERY]
-
-Returns the RESOURCE as a Perl data structure.
-
-=head2 DELETE RESOURCE [, QUERY]
-
-Deletes the RESOURCE.
-
-=head2 PUT RESOURCE, QUERY, VALUE [, HEADERS]
-
-Creates RESOURCE based on VALUE.
-
-=head2 POST RESOURCE, QUERY, VALUE [, HEADERS]
-
-Updates RESOURCE based on VALUE.
-
 =head1 UTILITY METHODS
 
 This module provides a few utility methods.
@@ -595,13 +405,6 @@ through large sets of issues without worrying about the startAt/total/offset
 attributes in the response from the /search REST endpoint. These methods
 implement the "paging" algorithm needed to work with those attributes.
 
-=head2 B<attach_files> ISSUE FILE...
-
-The C</issue/KEY/attachments> REST endpoint, used to attach files to issues,
-requires a specific content type encoding which is difficult to come up with
-just the C<REST::Client> interface. This utility method offers an easier
-interface to attach files to issues.
-
 =head1 SEE ALSO
 
 =over
@@ -610,31 +413,25 @@ interface to attach files to issues.
 
 JIRA::REST uses a REST::Client object to perform the low-level interactions.
 
-=item * C<JIRA::Client>
+=item * C<JIRA::REST>
 
-JIRA::Client is another Perl module implementing the other JIRA
-API based on SOAP.
-
-=item * C<JIRA::Client::REST>
-
-This is another module implementing JIRA's REST API using
-L<SPORE|https://github.com/SPORE/specifications/blob/master/spore_description.pod>.
-I got a message from the author saying that he doesn't intend to keep
-it going.
+This code is basically L<JIRA::REST|https://metacpan.org/pod/JIRA::REST> with
+some tweaks to get it to work with the Confluence REST API.
 
 =back
 
 =head1 REPOSITORY
 
-L<https://github.com/gnustavo/JIRA-REST>
+L<https://github.com/rmloveland/Confluence-REST>
 
 =head1 AUTHOR
 
-Gustavo L. de M. Chaves <gnustavo@cpan.org>
+Richard M. Loveland <rloveland@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
 This software is copyright (c) 2015 by CPqD <www.cpqd.com.br>.
+Changes to adapt to Confluence REST APIs copyright (c) 2016 by Rich Loveland.
 
 This is free software; you can redistribute it and/or modify it under
 the same terms as the Perl 5 programming language system itself.
