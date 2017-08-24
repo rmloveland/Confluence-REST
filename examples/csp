@@ -10,67 +10,72 @@ use JSON;
 
 our $DEBUG = 0;
 
-die "USAGE: csp 'label = xray and space = console and type = page'\n" unless scalar @ARGV >= 1;
+die "USAGE: csp 'label = xray and space = console and type = page'\n"
+  unless scalar @ARGV >= 1;
 my $CQL = shift;
 my $base_url = $ENV{WIKI_URL} || 'https://wiki.appnexus.com';
 
 my $confluence = Confluence::REST->new($base_url);
 
-$confluence->set_search_iterator({
-                                  cql    => $CQL,
-                                  expand => 'metadata.labels',
-                                 });
+$confluence->set_search_iterator(
+    {
+        cql    => $CQL,
+        expand => 'metadata.labels',
+    }
+);
 
 my $cols = "Type, Title, Link, ID, Labels";
 
 say $cols;
 
-ELEM: while (my $item = $confluence->next_result) {
-  say encode_json $item if $DEBUG;
-  my $type = $item->{type};
-  if ($type eq 'page') {
-    my $title = $item->{title};
-    my $tinylink = $base_url . $item->{_links}{tinyui};
-    my $id = $item->{id};
-    my $labels = get_labels($item);
-    my $labelstring = '';
-    if ($labels) {
-      $labelstring = labels2string($labels);
+ELEM: while ( my $item = $confluence->next_result ) {
+    say encode_json $item if $DEBUG;
+    my $type = $item->{type};
+    if ( $type eq 'page' ) {
+        my $title       = $item->{title};
+        my $tinylink    = $base_url . $item->{_links}{tinyui};
+        my $id          = $item->{id};
+        my $labels      = get_labels($item);
+        my $labelstring = '';
+        if ($labels) {
+            $labelstring = labels2string($labels);
+        }
+        my $output = qq[$type, "$title", $tinylink, $id];
+        $output .= qq[, $labelstring] if $labelstring;
+        say $output;
     }
-    my $output = qq[$type, "$title", $tinylink, $id];
-    $output .= qq[, $labelstring] if $labelstring;
-    say $output;
-  }
-  elsif ($type eq 'attachment') {
-    my $title = $item->{title};
-    my $link  = $base_url . $item->{_links}{webui};
-    my $id = $item->{id};
-    say qq[$type, "$title", $link, $id];
-  }
+    elsif ( $type eq 'attachment' ) {
+        my $title = $item->{title};
+        my $link  = $base_url . $item->{_links}{webui};
+        my $id    = $item->{id};
+        say qq[$type, "$title", $link, $id];
+    }
 }
 
 sub labels2string {
-  # ArrayRef -> String
-  # Expects caller to have checked if $labels is defined.
-  my $labels = shift;
-  my @out;
-  for my $label (@$labels) {
-    my $part = $label->{name};
-    push @out, $part;
-  }
 
-  my $out = join ",", @out;
+    # ArrayRef -> String
+    # Expects caller to have checked if $labels is defined.
+    my $labels = shift;
+    my @out;
+    for my $label (@$labels) {
+        my $part = $label->{name};
+        push @out, $part;
+    }
 
-  return qq["$out"];
+    my $out = join ",", @out;
+
+    return qq["$out"];
 }
 
 sub get_labels {
-  # HashRef -> ArrayRef || undef
-  my $item = shift;
-  my $retval = undef;
-  my $labels = $item->{metadata}{labels}{results};
-  $retval //= $labels;
-  return $retval;
+
+    # HashRef -> ArrayRef || undef
+    my $item   = shift;
+    my $retval = undef;
+    my $labels = $item->{metadata}{labels}{results};
+    $retval //= $labels;
+    return $retval;
 }
 
 __END__

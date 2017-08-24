@@ -12,17 +12,19 @@ my $page = shift;
 
 my ( $space, $title ) = split /:/, $page;
 
-my $base_url = 'https://wiki.appnexus.com';
+my $base_url   = 'https://wiki.appnexus.com';
 my $confluence = Confluence::REST->new($base_url);
 my $cql        = qq[type = page AND space = '$space' AND title = '$title'];
 
-$confluence->set_search_iterator({
-                                  cql    => $cql,
-                                  expand => 'body.storage',
-                                 });
+$confluence->set_search_iterator(
+    {
+        cql    => $cql,
+        expand => 'body.storage',
+    }
+);
 
-if (my $item = $confluence->next_result) {
-  state $count = 0;
-  my $content_body = $item->{body}->{storage}->{value};
-  say $content_body;
+if ( my $item = $confluence->next_result ) {
+    state $count = 0;
+    my $content_body = $item->{body}->{storage}->{value};
+    say $content_body;
 }
